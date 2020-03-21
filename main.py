@@ -1,231 +1,208 @@
-class Solution:
-    def isMatch_new(self, s: str, p: str) -> bool:
-        def get_next_p(p_position: int):
-            if p_position < 0:
-                return False,'', False, -1
-            if p_position == 0:
-                return True, p[p_position], -1
-            if p[p_position] == '*':#getting the lenghts of the same characters in the * pattern
-                return True, p[p_position-1], True, p_position-2
+class Patterns:
+    def __init__(self):
+        self.my_patterns = []
+
+    def __init__(self, given_pattern: str):
+        self.my_patterns = []
+        self.parse_string(given_pattern)
+
+    def add_pattern(self, given_char):
+        self.my_patterns.append(given_char)
+
+    def parse_string(self, given_string: str):
+        for i in range(len(given_string)):
+            if given_string[i] == '*':
+                self.my_patterns[-1] += '*'
             else:
-                return True, p[p_position], False, p_position-1
+                self.add_pattern(given_string[i])
 
-        s_position = len(s)-1
-        next_pattern_exist, pattern, is_star, next_p = get_next_p(len(p)-1)
+    def list_single(self):
+        return [single_pattern for single_pattern in self.my_patterns if len(single_pattern) == 1]
 
-        while next_pattern_exist:
-            if s[s_position] == pattern or pattern == '.':
-                s_position -= 1
-                if s_position == 0:
-                    if next_p == -1 or next_p == 0:
+    def list_asterisk(self):
+        return [single_pattern for single_pattern in self.my_patterns if len(single_pattern) > 1]
+
+    def __str__(self):
+        return ",".join([str(element) for element in self.my_patterns])
+
+
+class Solution:
+
+    def isMatch(self, s: str, з: str) -> bool:
+        def reached_end():
+            return position_in_pattern == len(pattern) - 1
+
+        def pattern_was_single_char():
+            return (len(processed_p) > 0 and len(processed_p[-1][0]) == 1)
+
+        def attempt_to_takefirst():
+            return (position_in_pattern < 0)
+
+        def get_last_processed_char():
+            return processed_p[-1][0][0]
+
+        def get_count_asterisks_used():
+            return processed_p[-1][1]
+
+        def is_last_asterisk_applied():
+            return len(processed_p[-1][0])>1
+
+        def covered_by_previouse_pattern_asterisked_char():
+            return get_last_processed_char() == pattern[position_in_pattern] and get_count_asterisks_used() > 0
+
+        def decrement_pattern_asterisked_char():
+            processed_p[-1][1] -= 1
+            return processed_p[-1][1] > 0
+
+        def asterisk_pattern_nolonger_matches():
+            return pattern[position_in_pattern] == processed_p[-1][0]
+
+        def is_pattern_char_checked_asterisk():
+            return len(pattern[position_in_pattern])>1
+
+        def get_next_pattern_symbol():
+            nonlocal position_in_pattern
+            if not reached_end():
+                if pattern_was_single_char() or attempt_to_takefirst():
+                    position_in_pattern += 1
+                    return True
+                else:
+                    if is_matched:
                         return True
                     else:
-                        return False
-                if not is_star:
-                    next_pattern_exist, pattern, is_star, next_p = get_next_p(next_p)
-            else:
-                if is_star:
-                    next_pattern_exist, pattern, is_star, next_p = get_next_p(next_p)
-                else:
-                    return False
-        return False
+                        if is_pattern_char_checked_asterisk() and asterisk_pattern_nolonger_matches():
+                            position_in_pattern += 1
+                            return True
+                        if covered_by_previouse_pattern_asterisked_char():
+                            if decrement_pattern_asterisked_char():
+                                position_in_pattern += 1
+                                return True
 
-    def isMatch_old(self, s: str, p: str) -> bool:
-        def get_next_p(position_p : int):
-            if position_p+1 < len(p):
-                return p[position_p+1]
-            else:
-                return p[position_p]
-
-        position_p = 0
-        position_s = 0
-        length_p = len(p)
-        length_s = len(s)
-        while position_p < length_p and position_s < length_s:
-            #point to the next symbol in the s string to check, if that is a beginning then position_s=0
-            if s[position_s] == p[position_p] or p[position_p] == '.':
-                if get_next_p(position_p) != '*':
-                    position_p += 1
-            else:
-                if get_next_p(position_p) == '*':
-                    #move to the next pattern after * but return back in one position in the string because the symbol in s does not matches
-                    if position_p + 2 < length_p and p[position_p] != p[position_p+2]:
-                        position_p += 2
-                    else:
-                        position_p += 3
-                    continue
-                    #we do not move to the next s symbol but checking
-                else:
-                    return False
-            position_s += 1
-
-        if position_p + 2 == length_p and get_next_p(position_p) == '*':
-            position_p += 2
-
-        if position_p + 2 < length_p and p[position_p] == p[position_p + 2]:
-            position_p += 3
-
-        if position_s == length_s and position_p == length_p:
-            return True
-        else:
             return False
 
-    def isMatch3(self, s: str, p: str) -> bool:
-        def get_next_p(p_position : int):
-            pattern_checked = 0
-            if p_position == len(p):# there is no pattern left
-                return False, '', False, len(p), pattern_checked
-            if p_position + 1 == len(p):# only last symbol in the pattern
-                return True, p[p_position], False, len(p), pattern_checked
-            if p[p_position + 1] == '*':#getting the lenghts of the same characters in the * pattern
-                for i in range(p_position+2,len(p)):
-                    if p[i] == p[p_position]:
-                        pattern_checked -= 1
-                    else:
-                        break
-                return True, p[p_position], True, p_position + 2, pattern_checked
-            else:
-                return True, p[p_position], False, p_position + 1, pattern_checked
+        def store_processed_string():
+            nonlocal processed_s
+            processed_s.append([string[position_in_string], position_in_pattern])
 
-        s_position = 0
-        next_pattern_exist, pattern, is_star, next_p, pattern_checked = get_next_p(0)
-
-        while next_pattern_exist:
-            if s[s_position] == pattern or pattern == '.':
-                pattern_checked += 1
-                s_position += 1
-                if s_position == len(s):
-                    if next_p>= len(p):
-                        return True
-                    else:
-                        #there are still patter left. Shall we go through it?
-                        if is_star:
-                            s_position -= 1
-                            next_pattern_exist, pattern, is_star, next_p, pattern_checked = get_next_p(next_p)
-                            continue
-                        else:
-                            #try to eat it until the end
-                            next_pattern_exist, pattern, is_star, next_p, pattern_checked = get_next_p(next_p)
-                            while next_p < len(p):
-                                next_pattern_exist, pattern, is_star, next_p, pattern_checked = get_next_p(next_p)
-                            if is_star:
-                                return True
-                            else:
-                                return False
-                if not is_star:
-                    next_pattern_exist, pattern, is_star, next_p, pattern_checked = get_next_p(next_p)
+        def store_processed_pattern():
+            nonlocal processed_p
+            if (len(processed_p) > 0) and (get_last_processed_char() == pattern[position_in_pattern][0]) and (is_last_asterisk_applied()):
+                processed_p[-1][1] += 1
             else:
-                if pattern_checked > 0 or is_star:
-                    old_pattern = pattern
-                    while old_pattern == pattern:
-                        next_pattern_exist, pattern, is_star, next_p, pattern_checked = get_next_p(next_p)
-                else:
-                    return False
-        return False
+                processed_p.append([pattern[position_in_pattern], 1])
 
-    def isMatch(self, s: str, p: str) -> bool:
-        def get_next_p(p_position : int):
-            if p_position == len(p):# there is no pattern left
-                return False, '', False, len(p)
-            if p_position + 1 == len(p):# only last symbol in the pattern
-                return True, p[p_position], False, len(p)
-            if p[p_position + 1] == '*':#getting the lenghts of the same characters in the * pattern
-                return True, p[p_position:p_position+1], True, p_position + 2
+        def next_character() -> bool:
+            nonlocal position_in_string
+            if position_in_string < len(string) - 1:
+                position_in_string += 1
+                return True
             else:
-                return True, p[p_position], False, p_position + 1
-        s_position = 0
-        next_pattern_exist, pattern, is_star, next_p = get_next_p(0)
-        result = []
-        p_result = -1
-        if s_position == len(s):
-            p_result = len(result) - 1
-            while next_p < len(p):
-                # evaluate the rest of pattern vs the last coverage
-                # skip all the patterns that fits to the last one applied? But move backwords for those that had been used for match
-                next_pattern_exist, pattern, is_star, next_p = get_next_p(next_p)
-                # skip all stars because they have no value
-                if is_star:
-                    continue
-                if result[p_result][0] != pattern and pattern != '.':
-                    if is_star:
-                        continue
-                    else:
-                        return False
-                # move back in result list if star was used for the symbol to match the pattern
-                if (result[p_result][0] == pattern or pattern == '.') and result[p_result][2]:
-                    p_result -= 1
-                    if p_result < -1:
-                        return False
-                else:
-                    return False
-            return True
-        while next_pattern_exist:
-            if s[s_position] == pattern or pattern == '.':
-                result.append([s[s_position],pattern,is_star])
-                p_result = -1
-                s_position += 1
-                if s_position == len(s):
-                    p_result = len(result) - 1
-                    while next_p < len(p):
-                        # evaluate the rest of pattern vs the last coverage
-                        # skip all the patterns that fits to the last one applied? But move backwords for those that had been used for match
-                        next_pattern_exist, pattern, is_star, next_p = get_next_p(next_p)
-                        #skip all stars because they have no value
-                        if is_star:
-                            continue
-                        if result[p_result][0] != pattern and pattern != '.':
-                            if is_star:
-                                continue
-                            else:
-                                return False
-                        #move back in result list if star was used for the symbol to match the pattern
-                        if (result[p_result][0] == pattern or pattern == '.') and result[p_result][2]:
-                            p_result -= 1
-                            if p_result<-1:
-                                return False
-                        else:
-                            return False
+                return False
+
+        def is_ptrn_an_asterisk():
+            return len(pattern[position_in_pattern]) == 1
+
+        def match(char_exist, char_pattern):
+            return char_exist == char_pattern or char_pattern == '.'
+
+        def get_next_string_symbol():
+            nonlocal position_in_string
+
+            def found_unprocessed_char_in_string():
+                return len(processed_s) < len(s)
+
+            if found_unprocessed_char_in_string():
+                if is_matched:
+                    position_in_string += 1
+                return True
+            else:
+                return False
+
+        def asterisk_was_used(position):
+            return len(processed_s[position][1]) > 1
+
+        def find_position_to_replace_asterisk_in_processed(symbol_from_pattern) -> int:
+            result = len(processed_s) - 1
+            if len(processed_s) > 0:
+                while result >= 0 and asterisk_was_used(result) and match(processed_s[result][0],
+                                                                          symbol_from_pattern) == True:
+                    result -= 1
+            return result + 1
+
+        def store_matched():
+            store_processed_string()
+            store_processed_pattern()
+
+        def ready_to_continue():
+            if is_matched:
+                return True
+            else:
+                if len(processed_p) > 0 and len(processed_p[-1]) > 1:
                     return True
-                if not is_star:
-                    next_pattern_exist, pattern, is_star, next_p = get_next_p(next_p)
-            else:
-                if is_star:
-                    next_pattern_exist, pattern, is_star, next_p = get_next_p(next_p)
                 else:
-                    if len(result)>0:
-                        if (result[p_result][0] == pattern or pattern == '.') and result[p_result][2]:
-                            p_result -= 1
-                            next_pattern_exist, pattern, is_star, next_p = get_next_p(next_p)
-                            continue
                     return False
-        return False
+
+        def check_completed():
+            if (last_checked_p == len(pattern) - 1 and len(processed_s) == len(s)) or (
+                    len(pattern) == len(string) == 0):
+                return True
+            else:
+                return False
+
+        position_in_string = -1
+        position_in_pattern = -1
+        #last_checked_p = 0
+        processed_s = []
+        processed_p = []
+        pattern = Patterns(з).my_patterns
+        string = list(s)
+        is_matched = True
+        while ready_to_continue():
+            if get_next_pattern_symbol():
+                if get_next_string_symbol():
+                    is_matched = False
+                    if match(string[position_in_string], pattern[position_in_pattern][0]):
+                        store_matched()
+                        is_matched = True
+
+        return check_completed()
+
 
 def test(s: object, p: object, expected: object) -> object:
     sol = Solution()
     test_result = sol.isMatch(s, p)
 
-    print("Input %r pattern %r expected %r returned %r this is %r" % (s, p, expected, test_result, (test_result == expected)))
+    print("Input %r pattern %r expected %r returned %r this is %r" % (
+        s, p, expected, test_result, (test_result == expected)))
+
 
 def test_all():
-    test("aaa","ab*a*c*a", True)
-    test("a","ab*", True)
-    test("abcd","d*",False)
-    test("mississippi","mis*is*ip*.",True)
-    test("aa","aa", True)
-    test("aaa","aaaa", False)
-    test("aaa","a*a", True)
-    test("aa","a*", True)
-    test("aa","a", False)
-    test("ab",".*", True)
-    test('a',"c*a",True)
-    test("baab","ba*ab",True)
-    test("baab","ba*aab",True)
-    test("baab","ba*aaab",False)
-    test("bab","ba*ab",True)
-    test("a",".*..a*",False)
-    test("bbbba",".*a*a",True)
+    test("baab", "ba*ab", True)
+    test("baab", "ba*aab", True)
+    test("baab", "ba*aaab", False)
+    test("a", "ab*", True)
+    test("abcd", "d*", False)
+    test("mississippi", "mis*is*ip*.", True)
+    test("aaa", "a*a", True)
+    test("aa", "aa", True)
+    test("aaa", "ab*a*c*a", True)
+    test("aaa", "aaaa", False)
+    test("aaa", "a*a", True)
+    test("aa", "a*", True)
+    test("aa", "a", False)
+    test("ab", ".*", True)
+    test('a', "c*a", True)
+    test("bab", "ba*ab", True)
+    test("a", ".*..a*", False)
+    test("bbbba", ".*a*a", True)
     test("ab", ".*..", True)
+    test("", ".*", True)
+    test("a", ".*..a*", False)
+    test("aaabbb", "a*b*....", True)
+    test("aaabbb", "a*b*a...", True)
+    test("aasdfasdfasdfasdfas", "aasdf.*asdf.*asdf.*asdf.*s", True)
 
+
+test("baab", "ba*ab", True)
 test_all()
-#test("a", ".*..a*", False)
-test("", ".*", True)
+# test("a", ".*..a*", False)
