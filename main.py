@@ -55,7 +55,7 @@ class Solution:
             return processed_p[-1][1] > 0
 
         def asterisk_pattern_nolonger_matches():
-            return pattern[position_in_pattern] == processed_p[-1][0]
+            return len(processed_p)>0 and pattern[position_in_pattern] == processed_p[-1][0]
 
         def is_pattern_char_checked_asterisk():
             return len(pattern[position_in_pattern])>1
@@ -70,6 +70,9 @@ class Solution:
                     if is_matched:
                         return True
                     else:
+                        if (is_ptrn_an_asterisk()) and (len(processed_p) == 0):
+                            position_in_pattern += 1
+                            return True
                         if is_pattern_char_checked_asterisk() and asterisk_pattern_nolonger_matches():
                             position_in_pattern += 1
                             return True
@@ -100,7 +103,7 @@ class Solution:
                 return False
 
         def is_ptrn_an_asterisk():
-            return len(pattern[position_in_pattern]) == 1
+            return len(pattern[position_in_pattern]) == 2
 
         def match(char_exist, char_pattern):
             return char_exist == char_pattern or char_pattern == '.'
@@ -118,17 +121,6 @@ class Solution:
             else:
                 return False
 
-        def asterisk_was_used(position):
-            return len(processed_s[position][1]) > 1
-
-        def find_position_to_replace_asterisk_in_processed(symbol_from_pattern) -> int:
-            result = len(processed_s) - 1
-            if len(processed_s) > 0:
-                while result >= 0 and asterisk_was_used(result) and match(processed_s[result][0],
-                                                                          symbol_from_pattern) == True:
-                    result -= 1
-            return result + 1
-
         def store_matched():
             store_processed_string()
             store_processed_pattern()
@@ -143,7 +135,7 @@ class Solution:
                     return False
 
         def check_completed():
-            if (last_checked_p == len(pattern) - 1 and len(processed_s) == len(s)) or (
+            if (position_in_pattern == len(pattern) - 1 and len(processed_s) == len(s)) or (
                     len(pattern) == len(string) == 0):
                 return True
             else:
@@ -157,15 +149,19 @@ class Solution:
         pattern = Patterns(з).my_patterns
         string = list(s)
         is_matched = True
-        while ready_to_continue():
+        while True:
             if get_next_pattern_symbol():
                 if get_next_string_symbol():
                     is_matched = False
                     if match(string[position_in_string], pattern[position_in_pattern][0]):
                         store_matched()
                         is_matched = True
-
+                else:
+                    is_matched = False
+            else:
+                break
         return check_completed()
+
 
 
 def test(s: object, p: object, expected: object) -> object:
@@ -203,6 +199,6 @@ def test_all():
     test("aasdfasdfasdfasdfas", "aasdf.*asdf.*asdf.*asdf.*s", True)
 
 
-test("baab", "ba*ab", True)
+test('a', "c*a", True)
 test_all()
 # test("a", ".*..a*", False)
