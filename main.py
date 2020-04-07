@@ -16,7 +16,7 @@ class Pattern:
         while symbol_pos > 0 and not self.single_symbol(symbol_pos-1):
             symbol_pos -= 1
             result = self.applications[symbol_pos] + result
-        return result
+        return list(set(result))
 
     def build_single_path(self, symbol_pos: int, s: str):
         def append_application():
@@ -42,12 +42,16 @@ class Pattern:
 
     def apply_pattern(self, symbol_pos: int, s: str):
         self.applications.append([])
-        if not self.build_single_path(symbol_pos, s) and self.single_symbol(symbol_pos):
-            return False
-        if len(self.applications[-1]) > 0:
+        if not self.build_single_path(symbol_pos, s):
             if self.single_symbol(symbol_pos):
+                return False
+
+        if len(self.applications[-1]) > 0:
+            if self.single_symbol(symbol_pos) and self.pattern[symbol_pos][0] != '.':
+                self.applications[-1].sort()
                 self.max_reached = self.applications[-1][-1]
             else:
+                self.applications[-1].sort()
                 self.max_reached = max(self.max_reached, self.applications[-1][-1])
         return True
 
@@ -60,6 +64,12 @@ class Pattern:
                 result[-1][1] = '*'
             else:
                 result.append([char, ''])
+        i = 0
+        while i < len(result)-1:
+            if result[i][0] == result[i+1][0] and result[i][1] == result[i+1][1] == '*':
+                del result[i+1]
+            i += 1
+
         return result
 
     def __str__(self):
@@ -108,7 +118,9 @@ def test_all():
     test("aaabbb", "a*b*....", True)
     test("aaabbb", "a*b*a...", True)
     test("aasdfasdfasdfasdfas", "aasdf.*asdf.*asdf.*asdf.*s", True)
+    test("bbba",".*b", False)
+    test("abbcacbbbbbabcbaca","a*a*.*a*.*a*.b*a*",True)
+    test("abbcacbbbbbabcbaca","a*a*.*a*.*a*.b*a*",True)
 
-
-test("bbba",".*b", False)
+test("bcbabcaacacbcabac","a*c*a*b*.*aa*c*a*a*", True)
 test_all()
