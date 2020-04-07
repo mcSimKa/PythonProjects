@@ -8,14 +8,27 @@ class Pattern:
     def application_covers_all(self, s: str):
         return self.max_reached == len(s) - 1
 
-    def list_covered_by_previous_symbol(self, history_depth) -> list:
-        return self.applications[-1 - history_depth]
+    def single_symbol(self, position: int) -> bool:
+        return self.pattern[position][1] != '*'
+
+    def fix_max_reached(self):
+        self.max_reached = max(self.max_reached, self.applications[-1][-1])
+
+    def list_covered_by_previous_symbol(self, symbol_pos) -> list:
+        history_depth = 1
+        result = self.applications[-1 - history_depth]
+        if symbol_pos == 0:
+            return result
+
+        history_depth += 1
+        while not self.single_symbol(symbol_pos-history_depth):
+            result += self.applications[-1 - history_depth]
+            history_depth += 1
+            if symbol_pos-history_depth < 0:
+                break
+        return result
 
     def build_single_path(self, symbol_pos: int, s: str):
-        def handle_zero_application_asterisk():
-            if shift == 1 and not self.single_symbol(symbol_pos):
-                self.applications[-1].append(start_from)
-
         def append_application():
             self.applications[-1].append(start_from + shift)
             return True
@@ -24,13 +37,11 @@ class Pattern:
             return (s[start_from+shift] == self.pattern[symbol_pos][0]) or (self.pattern[symbol_pos][0] == '.')
 
         matched = False
-        history_depth = 1
-        previous_symbol_matches = self.list_covered_by_previous_symbol(history_depth)
+        previous_symbol_matches = self.list_covered_by_previous_symbol(symbol_pos)
         for start_from in previous_symbol_matches:
             shift = 1
             while start_from + shift < len(s):
                 if compare():
-                    handle_zero_application_asterisk()
                     matched = append_application()
                     if self.single_symbol(symbol_pos):
                         break
@@ -39,16 +50,7 @@ class Pattern:
                 shift += 1
         return matched
 
-
-
-    def single_symbol(self, position: int) -> bool:
-        return self.pattern[position][1] != '*'
-
     def apply_pattern(self, symbol_pos: int, s: str):
-        #if self.single_symbol(symbol_pos):
-        #    self.applications.append([])
-        #else:
-        #    self.applications.append([self.applications[-1][0]])
         self.applications.append([])
         if not self.build_single_path(symbol_pos, s):
             if self.single_symbol(symbol_pos):
@@ -59,8 +61,6 @@ class Pattern:
         self.fix_max_reached()
         return True
 
-    def fix_max_reached(self):
-        self.max_reached = max(self.max_reached, self.applications[-1][-1])
 
 
     def parse(self, p: str) -> list:
@@ -79,7 +79,6 @@ class Pattern:
         self.pattern = self.parse(p)
         self.applications = [[-1]]
         self.max_reached = -1
-        self
 
 
 class Solution:
@@ -112,7 +111,6 @@ def test_all():
     test("ab", ".*", True)
     test('a', "c*a", True)
     test("bab", "ba*ab", True)
-    test("a", ".*..a*", False)
     test("bbbba", ".*a*a", True)
     test("ab", ".*..", True)
     test("", ".*", True)
@@ -121,11 +119,6 @@ def test_all():
     test("aaabbb", "a*b*a...", True)
     test("aasdfasdfasdfasdfas", "aasdf.*asdf.*asdf.*asdf.*s", True)
 
-
-test("aaabaaa", "a*b", False)
-test("aaab", "a*b", True)
-
-test("aaabbb", "a*b*....", True)
-
-test("aaabbb", "a*b*a...", True)
-#test_all()
+test("bab", "ba*ab", True)
+test("a", ".*..a*", False)
+test_all()
