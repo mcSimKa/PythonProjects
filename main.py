@@ -11,21 +11,11 @@ class Pattern:
     def single_symbol(self, position: int) -> bool:
         return self.pattern[position][1] != '*'
 
-    def fix_max_reached(self):
-        self.max_reached = max(self.max_reached, self.applications[-1][-1])
-
     def list_covered_by_previous_symbol(self, symbol_pos) -> list:
-        history_depth = 1
-        result = self.applications[-1 - history_depth]
-        if symbol_pos == 0:
-            return result
-
-        history_depth += 1
-        while not self.single_symbol(symbol_pos-history_depth):
-            result += self.applications[-1 - history_depth]
-            history_depth += 1
-            if symbol_pos-history_depth < 0:
-                break
+        result = self.applications[symbol_pos]
+        while symbol_pos > 0 and not self.single_symbol(symbol_pos-1):
+            symbol_pos -= 1
+            result = self.applications[symbol_pos] + result
         return result
 
     def build_single_path(self, symbol_pos: int, s: str):
@@ -52,13 +42,13 @@ class Pattern:
 
     def apply_pattern(self, symbol_pos: int, s: str):
         self.applications.append([])
-        if not self.build_single_path(symbol_pos, s):
+        if not self.build_single_path(symbol_pos, s) and self.single_symbol(symbol_pos):
+            return False
+        if len(self.applications[-1]) > 0:
             if self.single_symbol(symbol_pos):
-                return False
+                self.max_reached = self.applications[-1][-1]
             else:
-                self.applications.remove(self.applications[-1])
-
-        self.fix_max_reached()
+                self.max_reached = max(self.max_reached, self.applications[-1][-1])
         return True
 
 
@@ -119,6 +109,6 @@ def test_all():
     test("aaabbb", "a*b*a...", True)
     test("aasdfasdfasdfasdfas", "aasdf.*asdf.*asdf.*asdf.*s", True)
 
-test("bab", "ba*ab", True)
-test("a", ".*..a*", False)
+
+test("bbba",".*b", False)
 test_all()
