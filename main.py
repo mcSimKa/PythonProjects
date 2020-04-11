@@ -1,90 +1,51 @@
 class Pattern:
-    def match_string(self, s: str):
-        for symbol_pos in range(len(self.pattern)):
-            if not self.apply_pattern(symbol_pos, s):
-                return False
-        return self.application_covers_all(s)
 
-    def application_covers_all(self, s: str):
-        return self.max_reached == len(s) - 1
-
-    def single_symbol(self, position: int) -> bool:
-        return self.pattern[position][1] != '*'
-
-    def list_covered_by_previous_symbol(self, symbol_pos) -> list:
-        result = self.applications[symbol_pos]
-        while symbol_pos > 0 and not self.single_symbol(symbol_pos-1):
-            symbol_pos -= 1
-            result = self.applications[symbol_pos] + result
-        return list(set(result))
-
-    def build_single_path(self, symbol_pos: int, s: str):
-        def append_application():
-            self.applications[-1].append(start_from + shift)
-            return True
-
-        def compare():
-            return (s[start_from+shift] == self.pattern[symbol_pos][0]) or (self.pattern[symbol_pos][0] == '.')
-
-        matched = False
-        previous_symbol_matches = self.list_covered_by_previous_symbol(symbol_pos)
-        for start_from in previous_symbol_matches:
-            shift = 1
-            while start_from + shift < len(s):
-                if compare():
-                    matched = append_application()
-                    if self.single_symbol(symbol_pos):
-                        break
+    def match_string(self, s: str) -> bool:
+        len_s = len(s)
+        for index_symbol, symbol in enumerate(self.pattern):
+            to_be_removed = []
+            for index_application, position in enumerate(self.applications):
+                if (position + 1 < len_s) and ((self.pattern[index_symbol][0] == '.') or (self.pattern[index_symbol][0] == s[position + 1])):
+                #if self.char_matches_symbol(position + 1, index_symbol):
+                    if (symbol[1] == '*'):
+                        self.applications.append(position+1)
+                    else:
+                        self.applications[index_application] += 1
                 else:
-                    break
-                shift += 1
-        return matched
+                    if not (symbol[1] == '*'):
+                        to_be_removed.append(index_application)
+            if len(to_be_removed) > 0:
+                to_be_removed.sort(reverse=True)
+                for index_removed in to_be_removed:
+                    del self.applications[index_removed]
+            self.applications = list(set(self.applications))
+            self.applications.sort()
 
-    def apply_pattern(self, symbol_pos: int, s: str):
-        self.applications.append([])
-        if not self.build_single_path(symbol_pos, s):
-            if self.single_symbol(symbol_pos):
-                return False
-
-        if len(self.applications[-1]) > 0:
-            if self.single_symbol(symbol_pos) and self.pattern[symbol_pos][0] != '.':
-                self.applications[-1].sort()
-                self.max_reached = self.applications[-1][-1]
-            else:
-                self.applications[-1].sort()
-                self.max_reached = max(self.max_reached, self.applications[-1][-1])
-        return True
-
-
-
-    def parse(self, p: str) -> list:
-        result = []
-        for char in p:
-            if char == '*':
-                result[-1][1] = '*'
-            else:
-                result.append([char, ''])
-        i = 0
-        while i < len(result)-1:
-            if result[i][0] == result[i+1][0] and result[i][1] == result[i+1][1] == '*':
-                del result[i+1]
-            i += 1
-
-        return result
-
-    def __str__(self):
-        return self.pattern
+        if len(self.applications) >  0:
+            self.applications.sort()
+            max_reached = self.applications[-1]
+            return max_reached == len(s)-1
+        else:
+            return False
 
     def __init__(self, p: str):
-        self.pattern = self.parse(p)
-        self.applications = [[-1]]
-        self.max_reached = -1
+        pattern = []
+        for char in p:
+            if char == '*':
+                pattern[-1][1] = '*'
+                if (len(pattern) > 1) and (pattern[-2][1] == '*') and (pattern[-1][0] == pattern[-2][0]):
+                    del pattern[-1]
+            else:
+                pattern.append([char, ''])
+        self.pattern = pattern
+        self.applications = [-1]
 
 
 class Solution:
     def isMatch(self, s: str, p: str) -> bool:
         pattern = Pattern(p)
         return pattern.match_string(s)
+
 
 def test(s: object, p: object, expected: object) -> object:
     sol = Solution()
@@ -118,9 +79,11 @@ def test_all():
     test("aaabbb", "a*b*....", True)
     test("aaabbb", "a*b*a...", True)
     test("aasdfasdfasdfasdfas", "aasdf.*asdf.*asdf.*asdf.*s", True)
-    test("bbba",".*b", False)
-    test("abbcacbbbbbabcbaca","a*a*.*a*.*a*.b*a*",True)
-    test("abbcacbbbbbabcbaca","a*a*.*a*.*a*.b*a*",True)
+    test("bbba", ".*b", False)
+    test("abbcacbbbbbabcbaca", "a*a*.*a*.*a*.b*a*", True)
+    test("abbcacbbbbbabcbaca", "a*a*.*a*.*a*.b*a*", True)
+    test("", ".", False)
 
-test("bcbabcaacacbcabac","a*c*a*b*.*aa*c*a*a*", True)
+
+test("a", ".*..a*", False)
 test_all()
